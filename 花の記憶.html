@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花の記憶 — Flower Album</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+    * {
+         box-sizing: border-box; /* 余白も含めて幅を計算するおまじない */
+    }
+    h1 {     /* タイトルのフォント情報 */
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 300;
+        font-size: 2rem;
+        color: #3a4a35;
+        margin :0;/* 花の記憶とflower albumの行間調整 */
+    }
+    header {   /* タイトルのスペースや背景色 */
+        padding: 24px 40px;
+        border-bottom: 1px solid #c9d4be; 
+        display: flex;      /* 横並びにする */
+        align-items: center;    
+        gap: 32px; 
+        background-image: url('https://res.cloudinary.com/dis5mceq1/image/upload/v1771835271/IMG_8825_sk3fdm.jpg');  /* 背景画像 */
+        background-size: cover; /*背景画像をheader全体へ*/
+        background-position: center; /*背景画像を中央へ*/
+        height: 200px; 
+        position: relative; /*.header-overlay*/
+    }
+    .header-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #f7f5f2); /*headerの背景画像とmainの背景をなじませる*/
+    }
+
+    header p {  /* タイトルのpタグのフォント情報 */
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        color: #000000;
+        margin :0px;  /* 花の記憶とflower albumの行間調整 */
+        margin-left: 15px;  /* タイトルとサブタイトルのバランス合わせてる */
+    }
+    input {   /* 検索ボックスの情報 */
+        padding: 10px 16px;
+        border: 1px solid #c9d4be;
+        border-radius: 10px;  /* 角張り具合*/
+        font-size: 0.85rem;
+        outline: none;
+        width: 300px;
+        background: rgba(255,255,255,0.6)
+    }
+    main { /* 写真を入れるのがmain*/
+        padding: 32px 40px;
+        background-color: #f5f3ef;
+        display: flex; /*横並び*/
+        flex-wrap: wrap;/*幅がないときは改行*/
+        gap: 16px;
+    }
+    .accordion { /* とある場所、日時の写真集を作るための箱*/
+        border: 1px solid #c9d4be;
+        border-radius: 14px;
+        background: #edf0e8;
+        width: calc(50% - 8px);  /* ← 2列になるよう幅を指定 (mainのgap16pxを2つの.accordionで分け合う)*/
+        box-sizing: border-box;  /* 幅の計算にborderとpaddingを含める*/
+    }
+    .accordion-header {
+        display: flex;
+        justify-content: space-between; /* 横配置を両端に振り分ける*/
+        padding: 18px 24px;
+        cursor: pointer; /* カーソルを指差しにする*/
+    }
+    .accordion-header p {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+            font-size: 1.00rem;
+            letter-spacing: 0.12em;
+            color: #231e1e;
+            margin: 0;
+    }
+    .accordion-body {
+        display: none; /* 内容を隠す*/
+        gap: 16px;  /* 写真の間隔 */
+        padding: 16px;
+    }
+    .accordion.open .accordion-body {
+        display: flex;  /* openされたときのみ、写真を横並びにし、幅が足りなければ、改行して表示する */
+        flex-wrap: wrap;
+    }
+    .accordion-body img {
+        width: calc(50% - 8px);  /* accordion-bodyのなかの半分-8px. gap16pxを均等に分けている*/
+        height: 200px;
+        object-fit: cover; /* 画像を枠にあわせてカットしてくれる */
+        cursor: pointer; /* 写真にカーソルが合うと、指差し */
+        transition: transform 0.2s ease, opacity 0.2s ease; /* transform、opacityを0.2sかけて滑らかにする */
+    }
+    .accordion-body img:hover {
+        transform: scale(1.03); /* 写真にカーソルが合うと、少し拡大する */
+        opacity: 0.9; /* 写真にカーソルが合うと、少し暗くなる */
+    }
+    .lightbox { 
+        display: none; /* openされなければなにもしない */
+        position: fixed;     /* 画面全体に半透明の黒い膜を作る準備.画面スクロールに関係なく出るようにしている */ 
+        inset: 0;          /* 上下左右余白0で、上に書いてあるような画面を出す */    
+        background: rgba(0, 0, 0, 0.8); /* 0.8は透明度 */
+        justify-content: center; /* 以下2行は中央に写真を出す命令 */
+        align-items: center;
+        z-index: 1000;    /* 他のものよりも優先して手前に表示する */
+    }
+    .lightbox.open {
+        display: flex; /* openになると写真や背景がでる */
+    }
+    .lightbox img {
+        max-width: 90%; /* 写真のサイズ設定 */
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+    #search-results { /* 検索結果の設定.普段は閉じている */ /* #は1回しかでてこないときに使う.そうじゃないときは.accordionのように書く */
+        display: none;
+        padding: 24px 40px;
+        background-color: #f5f3ef;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    #search-results.active {
+        display: flex; /* activeになったときだけ表示 */
+    }
+    #search-results img {
+        width: calc(25% - 12px); /* 一行四枚表示.余白16×3pxを四等分している */
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    #search-empty { /* 検索結果が空のときの設定.普段は閉じている */ 
+        display: none; 
+        padding: 24px 40px;
+        color: #888;
+        font-size: 0.9rem;
+    }
+    #search-empty.active {
+     display: block; /* 横幅いっぱいに箱が広がる */ 
+    }
+    .menu-btn {
+        position: absolute; /* fixedだとスクロールでついてきてしまうので固定 */ 
+        top: 20px; /* absoluteなので位置が指定できる */ 
+        right: 24px;
+        z-index: 2000; /* 被ったときに優先して表示される度合い */ /* 後で定義するmenuは1500にすることで、ハンバーガーメニューが隠れない */
+        background: rgba(255,255,255,0.75); /*ボタンを半透明の背景で再現 */ 
+        backdrop-filter: blur(6px);
+        border: 1px solid #c9d4be; /* ボタンの枠線部分 */
+        border-radius: 8px; /* 枠の丸み具合 */
+        width: 44px;
+        height: 44px;
+        cursor: pointer; /* カーソルがあうと指差し */
+        display: flex; /* ハンバーガーメニューの横線を縦に並べるための設定がここから5行 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        transition: background-color 0.2s ease; /* 背景色を滑らかに変える */
+    }
+    .menu-btn:hover {
+        background-color: rgba(255,255,255,0.95); /* 背景全体を半透明にする */
+    }
+    .menu-btn span {
+        display: block; 
+        width: 20px; /* 横線のサイズ */
+        height: 1.5px;
+        background-color: #3a4a35; /* ハンバーガーメニューの線の色を指定 */
+        transition: transform 0.3s ease, opacity 0.3s ease; /* transformとopacityを滑らかにする */
+        transform-origin: center;
+    }
+    .menu-btn.open span:nth-child(1) { /* ハンバーガーメニューをクリックしたら、横線3本がバツになるようにする */
+        transform: translateY(6.5px) rotate(45deg);  /* 1本目は45度回転 */   /* translateYは高さの変更.6.5px下に移動する */
+    }
+    .menu-btn.open span:nth-child(2) {
+        opacity: 0;/* 二本目は消す */
+    }
+    .menu-btn.open span:nth-child(3) {
+        transform: translateY(-6.5px) rotate(-45deg); /* 3本目は45度回転 */
+    }
+    .drawer { /* menuの設定 */
+        position: absolute; /* absoluteだと座標で指定できる */
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100%;
+        background: #f7f5f2;
+        z-index: 1500; /* ボタンよりは手前 */
+        transform: translateX(100%); /* 普段は画面1つ分ずらすことで、表示されていないように見せている */
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* スライドインを滑らかにしている */
+        display: flex;
+        flex-direction: column; /* menuの中身縦並びにする */
+        padding: 80px 40px 40px; /*上、左右、下の順に余白決定*/
+    }
+    .drawer.open {
+        transform: translateX(0); /* ズレしてたのを戻すことで表示する */
+    }
+    .drawer-title { /* menuのtilteの設定 */
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 300;
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        color: #aab8a2;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+    }
+    .drawer nav { /* menuの中身のボタンの設定 */
+        display: flex;
+        flex-direction: column; /* 縦並び */
+        gap: 0;
+    }
+    .drawer nav a {
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 300;
+        font-size: 1.1rem;
+        letter-spacing: 0.08em;
+        color: #2d3a28;
+        text-decoration: none;
+        padding: 14px 0;
+        border-bottom: 1px solid #e0e8d8; /*区切るための線*/
+        transition: color 0.2s ease, padding-left 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .drawer nav a:hover {
+        color: #6a8f60;
+        padding-left: 6px;
+    }
+    .link-icon {
+        font-size: 0.85rem;
+        opacity: 0.5;
+    }
+    .drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.2); /*menuの外の暗い背景*/
+        z-index: 1400; /*menuよりは内側、mainよりは外側に欲しい*/
+        opacity: 0; /*普段は完全透明でみえない*/
+        pointer-events: none; /*透明のときはクリック操作を受け付けない*/
+        transition: opacity 0.35s ease;
+    }
+    .drawer-overlay.open {
+        opacity: 1; /*opneになると見えるようになる*/
+        pointer-events: auto; /*クリック操作を受け付ける.透明のときは受け付けない仕様にしている*/
+    }
+</style>
+</head>
+<body>
+    <button class="menu-btn" id="menuBtn" aria-label="メニューを開く">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <div class="drawer" id="drawer">
+        <p class="drawer-title">Menu</p>
+        <nav>
+            <a href="https://yuri-park.jp/" target="_blank">
+                <span class="link-icon">🥀</span> 百合が原公園
+            </a>
+            <a href="https://www.hokudai.ac.jp/fsc/bg/" target="_blank">
+                <span class="link-icon">🌳</span> 北大植物園
+            </a>
+            <a href="https://www.sapporo-park.or.jp/toyohira/" target="_blank">
+                <span class="link-icon">🌼</span> 豊平公園
+            </a>
+            <a href="https://project-python-g4jgz8pzdyfpkeuacplwxb.streamlit.app/" target="_blank">
+                <span class="link-icon">🎲</span> 自作WEBアプリ(ヨット)
+            </a>
+        </nav>
+    </div>
+
+    <header> <!-- タイトル -->
+        <div>  <!-- divでひとまとまりにすると、flexでもここは縦並び -->
+            <h1>花の記憶</h1>
+            <p>Flower album</p>
+        </div>
+        <input type="text" placeholder="🔎ユリ、ダリア、桜…">
+        <div class="header-overlay"></div>
+    </header>
+    <div id="search-results"></div> <!--検索結果表示スペース-->
+    <div id="search-empty">該当する写真が見つかりませんでした。</div>
+    <main>  <!-- 写真を飾る場所 -->
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/09/07 🌸 ダリア展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771833473/IMG_9757_auchbz.jpg" alt="ダリア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771834183/IMG_9760_pnsq9x.jpg" alt="ダリア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771850253/IMG_9756_maiemd.jpg" alt="ダリア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771850252/IMG_9769_tejiko.jpg" alt="ダリア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771850517/IMG_9724_fmdaqg.jpg" alt="アサガオ">
+            </div>
+
+        </div>
+
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/07/10 🌸 ユリ展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771834677/IMG_9259_lywznd.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771834710/IMG_9261_i8uzut.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771851459/IMG_9228_juvdvw.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771851460/IMG_9226_lswbh8.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771851459/IMG_9252_crlkbi.jpg"alt="エゾアジサイ">
+            </div>
+        </div>        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/05/13 🌸 ペチュニア展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771935941/IMG_8482_lbvswc.jpg" alt="ペチュニア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771994540/IMG_8411_hji4he.jpg" alt="ペチュニア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771994540/IMG_8418_noobhq.jpg" alt="ペチュニア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771994540/IMG_8403_ucpjxm.jpg" alt="ペチュニア">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/05/13 🌸 チューリップ 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771935940/IMG_8489_vvtaw7.jpg" alt="チューリップ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771935940/IMG_8491_ayok69.jpg" alt="チューリップ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771935941/IMG_8492_pyfxvs.jpg" alt="チューリップ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771935941/IMG_8435_vmbgqc.jpg" alt="チューリップ">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/04/30 🌸 オーリキュラ展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771942563/IMG_8291_eqqkbx.jpg" alt="オーリキュラ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936135/IMG_8303_dar9kv.jpg" alt="オーリキュラ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771994657/IMG_8299_lvhtjz.jpg" alt="オーリキュラ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771994658/IMG_8298_iv86uk.jpg" alt="オーリキュラ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936135/IMG_8344_akn3rv.jpg" alt="スズラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936137/IMG_8345_cjmev7.jpg" alt="ユキノシタ">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/03/15 🌸 洋ラン展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936365/IMG_7877_pij8g4.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936363/IMG_7872_tqg6wl.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936363/IMG_7872_tqg6wl.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936360/IMG_7876_vnudo6.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936360/IMG_7884_stktzh.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936369/IMG_7878_sqyroc.jpg" alt="洋ラン">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/03/15 🌸 ツバキ展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936373/IMG_7856_bhxja3.jpg" alt="ツバキ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936384/IMG_7848_e6tanv.jpg" alt="ツバキ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936389/IMG_7842_nexkee.jpg" alt="ツバキ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936377/IMG_7855_x0fntj.jpg" alt="ツバキ">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/02/19 🌸 アザレア展 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936395/IMG_7716_myvxbb.jpg" alt="アザレア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771993507/IMG_7715_l1p01b.png" alt="アザレア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936400/IMG_7717_um9w5v.jpg" alt="アザレア">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936397/IMG_7718_iq1lbl.jpg" alt="アザレア">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/02/19 🌸 おまけ 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771936136/IMG_8347_kr7fte.jpg" alt="クリスマスローズ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771995038/IMG_7664_oflkcu.jpg" alt="ミモザ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771995035/IMG_7675_gw4lja.jpg" alt="ツバキ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1771995033/IMG_7678_iyvqct.jpg" alt="アザレア">
+            </div>
+
+        </div>
+        <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 北大植物園 / 2024/09/14 </p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023378/IMG_6066_i9f6fj.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023378/IMG_6096_yobjfw.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023378/IMG_6070_lsv3kd.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023379/IMG_6086_utswgi.jpg" alt="マルバタマノカンザシ">
+            </div>
+
+        </div>
+       <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 豊平公園 / 2024/08/14 </p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023697/IMG_5473_ei0w7j.jpg" alt="極楽鳥花">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023700/IMG_5472_hl8mpq.jpg" alt="洋ラン">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023700/IMG_5467_iwnxcd.jpg" alt="アジサイ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772023700/IMG_5468_hw6co5.jpg" alt="アジサイ">
+            </div>
+
+        </div>
+       <div class="accordion">
+
+            <div class="accordion-header">
+            <p>📍 百合が原公園 / 2025/03/15 🌸 ユリ 🌸</p>
+            <span>▼</span>
+            </div>
+
+            <div class="accordion-body">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772024015/IMG_4985_wpnucn.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772024024/IMG_4984_gqcsjp.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772024009/IMG_5002_rq3ocb.jpg" alt="ユリ">
+                <img src="https://res.cloudinary.com/dis5mceq1/image/upload/v1772024017/IMG_4977_am3ytu.jpg" alt="ユリ">
+            </div>
+
+        </div>
+    </main>
+    <script>
+        const searchInput = document.querySelector('input');
+        const searchResults = document.getElementById('search-results');
+        const searchEmpty = document.getElementById('search-empty');
+        const mainArea = document.querySelector('main');
+
+        searchInput.addEventListener('input', function() { //inputを受け取る
+        const query = searchInput.value.trim(); //前後の空白取り除く
+        if (query === '') {
+            searchResults.classList.remove('active'); //検索後に検索欄が空になったら検索結果を非表示にする
+            searchEmpty.classList.remove('active');
+            mainArea.style.display = 'flex'; //310行目の操作で、検索中はmainを非表示にしている.検索をやめたらそれが解除されるようにしている
+            return;
+        }
+        const allImgs = document.querySelectorAll('.accordion-body img'); //全ての写真を取得
+        const matched = []; //検索条件に合う写真を入れるリストを用意する
+
+        allImgs.forEach(function(img) { //すべての写真に対して、altがqueryに含まれているならば、リストに写真を追加
+            const alt = img.alt || ''; //縦線はorの意味.altが空のときの対処で、altが空だったら空文字にする
+            if (alt.includes(query)) {
+                matched.push(img);
+            }
+        });
+        mainArea.style.display = 'none'; //検索中はaccordion全て非表示にする
+        searchResults.innerHTML = ''; //写真を入れる.次に検索するときに初期化できるようにしている
+
+        if (matched.length === 0) { //条件に合う写真が0のときの操作
+            searchResults.classList.remove('active'); //検索結果表示欄は閉じてdisplay noneへ
+            searchEmpty.classList.add('active'); //こちらをactiveにする(条件に合う写真がないよという旨の文字列がブロックに表示されるようになる)
+        } else {
+            searchEmpty.classList.remove('active'); //条件に合う写真がないときの画面をdisplay noneにしておく
+            matched.forEach(function(img) { //条件に合う各写真に対して以下の操作を行う
+                const clone = document.createElement('img'); //imgタグを生成している
+                clone.src = img.src;
+                clone.alt = img.alt; //不要だけど保険でこぴーとしてつけてる
+                clone.addEventListener('click', function() { //検索欄の写真にも、クリックで拡大機能をつける
+                    lightboxImg.src = clone.src;
+                    lightbox.classList.add('open');
+                });
+        searchResults.appendChild(clone);
+         });
+        searchResults.classList.add('active');
+            }
+        });
+    </script>
+    <script> //クリックしたら写真が表示されるようにする
+        const accordions = document.querySelectorAll('.accordion'); // .accordion クラスを持つ要素を全部取得
+
+        accordions.forEach(function(accordion) { // 取得したaccordion全てに以下の操作を行う
+        const header = accordion.querySelector('.accordion-header'); // accordionの中からaccordion-headerという部分を探し、headerにいれる
+        
+        header.addEventListener('click', function() { // headerがクリックされたときに実行する処理を登録
+            accordion.classList.toggle('open'); // div accordionとdiv accordion openを切り替える
+        });
+        });
+    </script>
+    
+    <div class="lightbox" id="lightbox">
+        <img id="lightbox-img" src="" alt=""> <!--ここで表示する画像を受け取る-->
+    </div>
+    <script>  //写真クリックしたら拡大表示されるようにする
+        const lightbox = document.getElementById('lightbox'); //HTMLに1つしかないidを取得するときにはgetElementById
+        const lightboxImg = document.getElementById('lightbox-img');
+
+         document.querySelectorAll('.accordion-body img').forEach(function(img) { //複数ある.accordion-body imgを全て取得する
+        img.addEventListener('click', function() { // 写真がクリックされたときに実行する処理を登録
+        lightboxImg.src = img.src;  //クリックするとsrc=""に写真のリンクを追加する
+        lightbox.classList.add('open'); //状態をopenにする
+            });
+         });
+
+         lightbox.addEventListener('click', function() {
+         lightbox.classList.remove('open'); // lightbox をクリックしたら閉じる
+         });
+
+    </script>
+    <script>
+        const menuBtn = document.getElementById('menuBtn');//これらを取得し名付ける
+        const drawer = document.getElementById('drawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+
+        function openDrawer() {
+            drawer.classList.add('open'); //これらをopenにする関数
+            drawerOverlay.classList.add('open');
+            menuBtn.classList.add('open');
+        }
+        function closeDrawer() { 
+            drawer.classList.remove('open'); //これらのopenの状態を解消する関数
+            drawerOverlay.classList.remove('open');
+            menuBtn.classList.remove('open');
+        }
+
+        menuBtn.addEventListener('click', function() { //menuBtnがクリックされたら
+            drawer.classList.contains('open') ? closeDrawer() : openDrawer(); //openしてるならcloseDrwerを、そうでないならopenDrwerを適用する
+        });
+        drawerOverlay.addEventListener('click', closeDrawer); //menuの外の暗くなっている所をクリックしても閉じれる
+    </script>
+</body>
+</html>
