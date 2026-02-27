@@ -103,9 +103,9 @@
             width: 100%; /* レスポンシブデザインへ */
         }
         h1 {
-            color: black;
-            font-size: 2.0rem; /* 文字を小さくする */
-            white-space: nowrap; /* 折り返しを禁止する */
+            color: black; /* スマホサイズだと背景と同化して見にくかったので黒ではっきりさせる */
+            font-size: 2.0rem; /* 文字サイズの調整 */
+            white-space: nowrap; /* 折り返しを禁止する(スマホだと縦並びになってしまっていた) */
         }
         input {
             width: 160px; /* 検索ボックスも小さくする */
@@ -198,7 +198,7 @@
         transform: translateY(-6.5px) rotate(-45deg); /* 3本目は45度回転 */
     }
     .drawer { /* menuの設定 */
-        position: absolute; /* absoluteだと座標で指定できる */
+        position: fixed; /* absoluteだと座標で指定できる */
         top: 0;
         right: 0;
         width: 280px;
