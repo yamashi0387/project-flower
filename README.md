@@ -7,6 +7,8 @@ Javascriptの簡単なコードが読めるようになったこと、HTMLの様
 
 簡単なものではありますが、AIと対話しながら開発を進めるバイブコーディングの感覚を養うことができました。
 
+写真のリンクはcoludinaryを使って取得しています。
+
 Webサイトのリンク：https://yamashi0387.github.io/project-flower/
 
 # 機能
