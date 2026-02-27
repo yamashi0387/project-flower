@@ -98,19 +98,6 @@
         cursor: pointer; /* 写真にカーソルが合うと、指差し */
         transition: transform 0.2s ease, opacity 0.2s ease; /* transform、opacityを0.2sかけて滑らかにする */
     }
-    @media (max-width: 600px) {
-        .accordion {
-            width: 100%; /* レスポンシブデザインへ */
-        }
-        h1 {
-            color: black; /* スマホサイズだと背景と同化して見にくかったので黒ではっきりさせる */
-            font-size: 2.0rem; /* 文字サイズの調整 */
-            white-space: nowrap; /* 折り返しを禁止する(スマホだと縦並びになってしまっていた) */
-        }
-        input {
-            width: 160px; /* 検索ボックスも小さくする */
-        }
-    }
     .accordion-body img:hover {
         transform: scale(1.03); /* 写真にカーソルが合うと、少し拡大する */
         opacity: 0.9; /* 写真にカーソルが合うと、少し暗くなる */
@@ -269,6 +256,21 @@
         font-size: 0.8rem;
         color: #888;
         text-align: center;
+    }
+    @media (max-width: 600px) {
+        .accordion {
+            width: 100%; /* レスポンシブデザインへ */
+        }
+        h1 {
+            color: black; /* スマホサイズだと背景と同化して見にくかったので黒ではっきりさせる */
+            font-size: 2.0rem; /* 文字サイズの調整 */
+            white-space: nowrap; /* 折り返しを禁止する(スマホだと縦並びになってしまっていた) */
+        }
+        input {
+            width: 160px; /* 検索ボックスも小さくする */
+        }
+        #search-results img {
+            width: calc(50% - 8px);
     }
 </style>
 </head>
