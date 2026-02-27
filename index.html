@@ -54,7 +54,7 @@
         background: rgba(255,255,255,0.6)
     }
     main { /* 写真を入れるのがmain*/
-        padding: 32px 40px;
+        padding: 32px 40px ;
         background-color: #f5f3ef;
         display: flex; /*横並び*/
         flex-wrap: wrap;/*幅がないときは改行*/
@@ -66,6 +66,7 @@
         background: #edf0e8;
         width: calc(50% - 8px);  /* ← 2列になるよう幅を指定 (mainのgap16pxを2つの.accordionで分け合う)*/
         box-sizing: border-box;  /* 幅の計算にborderとpaddingを含める*/
+        align-self: flex-start
     }
     .accordion-header {
         display: flex;
@@ -96,6 +97,11 @@
         object-fit: cover; /* 画像を枠にあわせてカットしてくれる */
         cursor: pointer; /* 写真にカーソルが合うと、指差し */
         transition: transform 0.2s ease, opacity 0.2s ease; /* transform、opacityを0.2sかけて滑らかにする */
+    }
+    @media (max-width: 600px) {
+        .accordion {
+            width: 100%; /* レスポンシブデザインへ */
+        }
     }
     .accordion-body img:hover {
         transform: scale(1.03); /* 写真にカーソルが合うと、少し拡大する */
@@ -249,6 +255,13 @@
         opacity: 1; /*opneになると見えるようになる*/
         pointer-events: auto; /*クリック操作を受け付ける.透明のときは受け付けない仕様にしている*/
     }
+    footer {
+        background-color: #edf0e8;  /* 色を指定する */
+        padding: 24px 40px;
+        font-size: 0.8rem;
+        color: #888;
+        text-align: center;
+    }
 </style>
 </head>
 <body>
@@ -288,6 +301,7 @@
     </header>
     <div id="search-results"></div> <!--検索結果表示スペース-->
     <div id="search-empty">該当する写真が見つかりませんでした。</div>
+    
     <main>  <!-- 写真を飾る場所 -->
         <div class="accordion">
 
@@ -572,6 +586,8 @@
         });
         drawerOverlay.addEventListener('click', closeDrawer); //menuの外の暗くなっている所をクリックしても閉じれる
     </script>
+    <footer> 
+        &copy;2026 Yuki Yamashina | 最終更新日: 2026年2月26日
+    </footer>
 </body>
-
 </html>
